@@ -1,7 +1,14 @@
 --[[
 	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
 ]]
+repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
 local player = game.Players.LocalPlayer
+repeat wait() until player.Character
+local RepoBase = "https://raw.githubusercontent.com/D4RK7H3N/DarkZhub/refs/heads/master"
+local Fluent = loadstring(game:HttpGet(RepoBase .. "/Libs/Fluent.lua"))()
+local SaveManager = loadstring(game:HttpGet(RepoBase .. "/Libs/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet(RepoBase .. "/Libs/InterfaceManager.lua"))()
+
 local gui = player:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MyButtonGui"
@@ -15,14 +22,14 @@ button.BackgroundColor3 = Color3.fromRGB(255,255,255)
 button.Text = "Stop Tween"
 button.Parent = screenGui
 local function onClick()
-    toTarget(game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame)
+    pcall(function()
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            CancelTween()
+        end
+    end)
 end
 button.MouseButton1Click:Connect(onClick)
-
-local RepoBase = "https://raw.githubusercontent.com/D4RK7H3N/DarkZhub/refs/heads/master"
-local Fluent = loadstring(game:HttpGet(RepoBase .. "/Libs/Fluent.lua"))()
-local SaveManager = loadstring(game:HttpGet(RepoBase .. "/Libs/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet(RepoBase .. "/Libs/InterfaceManager.lua"))()
 
 local Window = Fluent:CreateWindow({
     Title = "Byte Hub",
@@ -62,20 +69,22 @@ elseif pid == 7449423635 then Third_Sea = true
 else game:Shutdown() end
 
 function AntiBan()
-    for i,v in pairs(game:GetService("Players").LocalPlayer.Character:GetDescendants()) do
-        if v:IsA("LocalScript") then
-            if v.Name == "General" or v.Name == "Shiftlock" or v.Name == "FallDamage" or v.Name == "4444" or v.Name == "CamBob" or v.Name == "JumpCD" or v.Name == "Looking" or v.Name == "Run" then
-                v:Destroy()
+    pcall(function()
+        for i,v in pairs(game:GetService("Players").LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("LocalScript") then
+                if v.Name == "General" or v.Name == "Shiftlock" or v.Name == "FallDamage" or v.Name == "4444" or v.Name == "CamBob" or v.Name == "JumpCD" or v.Name == "Looking" or v.Name == "Run" then
+                    v:Destroy()
+                end
             end
         end
-    end
-    for i,v in pairs(game:GetService("Players").LocalPlayer.PlayerScripts:GetDescendants()) do
-        if v:IsA("LocalScript") then
-            if v.Name == "RobloxMotor6DBugFix" or v.Name == "Clans" or v.Name == "Codes" or v.Name == "CustomForceField" or v.Name == "MenuBloodSp" or v.Name == "PlayerList" then
-                v:Destroy()
+        for i,v in pairs(game:GetService("Players").LocalPlayer.PlayerScripts:GetDescendants()) do
+            if v:IsA("LocalScript") then
+                if v.Name == "RobloxMotor6DBugFix" or v.Name == "Clans" or v.Name == "Codes" or v.Name == "CustomForceField" or v.Name == "MenuBloodSp" or v.Name == "PlayerList" then
+                    v:Destroy()
+                end
             end
         end
-    end
+    end)
 end
 AntiBan()
 
@@ -948,6 +957,19 @@ SeaTab:AddToggle("AutoPrehistoricIsland", {Title = "Auto Prehistoric Island", De
 Options.AutoPrehistoricIsland:OnChanged(function() _G.AutoPrehistoricIsland = Options.AutoPrehistoricIsland.Value end)
 
 ------------------- Auto Sea Event Loops ------------------------
+local function SafeHRP()
+    local p = game.Players.LocalPlayer
+    if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+        return p.Character.HumanoidRootPart
+    end
+    return nil
+end
+
+local function SafeChar()
+    local p = game.Players.LocalPlayer
+    return p and p.Character or nil
+end
+
 -- Sea event detection helpers
 local function FindSeaEvent(name)
     return game:GetService("Workspace"):FindFirstChild(name)
@@ -981,19 +1003,163 @@ end
 -- Auto Kitsune
 spawn(function()
     while wait(3) do
-        if _G.AutoKitsune and Third_Sea then
-            local island = FindSeaEvent("KitsuneIsland")
-            if island then
-                local part = FindIslandParts("KitsuneIsland")
-                if part then
-                    local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - part.Position).Magnitude
-                    if dist > 200 then
-                        toTarget(part)
-                    else
-                        for i,v in pairs(workspace.Enemies:GetChildren()) do
-                            if v.Name == "Kitsune" or v.Name == "KitsuneMonster" then
-                                if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0,0,5)
+        pcall(function()
+            if _G.AutoKitsune and Third_Sea then
+                local hrp = SafeHRP() if not hrp then return end
+                local island = FindSeaEvent("KitsuneIsland")
+                if island then
+                    local part = FindIslandParts("KitsuneIsland")
+                    if part then
+                        local dist = (hrp.Position - part.Position).Magnitude
+                        if dist > 200 then
+                            toTarget(part)
+                        else
+                            for i,v in pairs(workspace.Enemies:GetChildren()) do
+                                if v.Name == "Kitsune" or v.Name == "KitsuneMonster" then
+                                    if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                                        hrp.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0,0,5)
+                                        wait(0.1)
+                                        NormalAttack()
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-- Auto Azure Ember (Kitsune island)
+spawn(function()
+    while wait(3) do
+        pcall(function()
+            if _G.AutoAzure and Third_Sea then
+                local hrp = SafeHRP() if not hrp then return end
+                for i,v in pairs(workspace:GetDescendants()) do
+                    if v.Name == "AzureEmber" or v.Name == "Azure" then
+                        if v:IsA("Part") or v:IsA("MeshPart") then
+                            local dist = (hrp.Position - v.Position).Magnitude
+                            if dist > 50 then
+                                toTarget(v)
+                            else
+                                firetouchinterest(hrp, v, 0)
+                                wait(0.1)
+                                firetouchinterest(hrp, v, 1)
+                            end
+                            break
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-- Auto Boat
+spawn(function()
+    while wait(3) do
+        pcall(function()
+            if _G.AutoBoat and Third_Sea then
+                local boat = workspace.Boats:FindFirstChild(game.Players.LocalPlayer.Name)
+                if not boat then
+                    CommF("BuyBoat")
+                end
+            end
+        end)
+    end
+end)
+
+-- Auto Rough Sea
+spawn(function()
+    while wait(3) do
+        pcall(function()
+            if _G.AutoRoughSea and Third_Sea then
+                CommF("SetSail", "RoughSea")
+            end
+        end)
+    end
+end)
+
+-- Auto Sea Beast
+spawn(function()
+    while wait(3) do
+        pcall(function()
+            if _G.AutoSeaBeast and Third_Sea then
+                local hrp = SafeHRP() if not hrp then return end
+                for i,v in pairs(workspace:GetDescendants()) do
+                    if v.Name == "SeaBeast" or v.Name == "TerrorShark" then
+                        if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            local dist = (hrp.Position - v.HumanoidRootPart.Position).Magnitude
+                            if dist > 200 then
+                                toTarget(v.HumanoidRootPart)
+                            else
+                                hrp.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0,0,10)
+                                wait(0.1)
+                                NormalAttack()
+                            end
+                        end
+                        break
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-- Auto Mirage
+spawn(function()
+    while wait(3) do
+        pcall(function()
+            if _G.AutoMirage and Third_Sea then
+                local hrp = SafeHRP() if not hrp then return end
+                local island = FindSeaEvent("MirageIsland")
+                if island then
+                    local part = FindIslandParts("MirageIsland")
+                    if part then
+                        local dist = (hrp.Position - part.Position).Magnitude
+                        if dist > 200 then
+                            toTarget(part)
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-- Auto Prehistoric Island (Volcano Event)
+spawn(function()
+    while wait(3) do
+        pcall(function()
+            if _G.AutoPrehistoricIsland and Third_Sea then
+                local hrp = SafeHRP() if not hrp then return end
+                local island = FindSeaEvent("PrehistoricIsland")
+                if island then
+                    local part = FindIslandParts("PrehistoricIsland")
+                    if part then
+                        local dist = (hrp.Position - part.Position).Magnitude
+                        if dist > 200 then
+                            toTarget(part)
+                            wait(1)
+                        else
+                            local skull = island:FindFirstChild("FossilAncientRelic") or island:FindFirstChild("TrexSkull") or island:FindFirstChild("Skull")
+                            if skull then
+                                local sdist = (hrp.Position - skull.Position).Magnitude
+                                if sdist > 20 then
+                                    toTarget(skull)
+                                    wait(0.5)
+                                else
+                                    firetouchinterest(hrp, skull, 0)
+                                    wait(0.1)
+                                    firetouchinterest(hrp, skull, 1)
+                                    CommF("VolcanoEvent")
+                                end
+                            end
+                            for i,v in pairs(workspace.Enemies:GetChildren()) do
+                                if v.Name == "LavaGolem" and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                                    hrp.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0,0,8)
                                     wait(0.1)
                                     NormalAttack()
                                 end
@@ -1002,132 +1168,7 @@ spawn(function()
                     end
                 end
             end
-        end
-    end
-end)
-
--- Auto Azure Ember (Kitsune island)
-spawn(function()
-    while wait(3) do
-        if _G.AutoAzure and Third_Sea then
-            for i,v in pairs(workspace:GetDescendants()) do
-                if v.Name == "AzureEmber" or v.Name == "Azure" then
-                    if v:IsA("Part") or v:IsA("MeshPart") then
-                        local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.Position).Magnitude
-                        if dist > 50 then
-                            toTarget(v)
-                        else
-                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, v, 0)
-                            wait(0.1)
-                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, v, 1)
-                        end
-                        break
-                    end
-                end
-            end
-        end
-    end
-end)
-
--- Auto Boat
-spawn(function()
-    while wait(3) do
-        if _G.AutoBoat and Third_Sea then
-            local boat = workspace.Boats:FindFirstChild(game.Players.LocalPlayer.Name)
-            if not boat then
-                CommF("BuyBoat")
-            end
-        end
-    end
-end)
-
--- Auto Rough Sea
-spawn(function()
-    while wait(3) do
-        if _G.AutoRoughSea and Third_Sea then
-            CommF("SetSail", "RoughSea")
-        end
-    end
-end)
-
--- Auto Sea Beast
-spawn(function()
-    while wait(3) do
-        if _G.AutoSeaBeast and Third_Sea then
-            for i,v in pairs(workspace:GetDescendants()) do
-                if v.Name == "SeaBeast" or v.Name == "TerrorShark" then
-                    if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                        local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - v.HumanoidRootPart.Position).Magnitude
-                        if dist > 200 then
-                            toTarget(v.HumanoidRootPart)
-                        else
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0,0,10)
-                            wait(0.1)
-                            NormalAttack()
-                        end
-                    end
-                    break
-                end
-            end
-        end
-    end
-end)
-
--- Auto Mirage
-spawn(function()
-    while wait(3) do
-        if _G.AutoMirage and Third_Sea then
-            local island = FindSeaEvent("MirageIsland")
-            if island then
-                local part = FindIslandParts("MirageIsland")
-                if part then
-                    local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - part.Position).Magnitude
-                    if dist > 200 then
-                        toTarget(part)
-                    end
-                end
-            end
-        end
-    end
-end)
-
--- Auto Prehistoric Island (Volcano Event)
-spawn(function()
-    while wait(3) do
-        if _G.AutoPrehistoricIsland and Third_Sea then
-            local island = FindSeaEvent("PrehistoricIsland")
-            if island then
-                local part = FindIslandParts("PrehistoricIsland")
-                if part then
-                    local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - part.Position).Magnitude
-                    if dist > 200 then
-                        toTarget(part)
-                        wait(1)
-                    else
-                        local skull = island:FindFirstChild("FossilAncientRelic") or island:FindFirstChild("TrexSkull") or island:FindFirstChild("Skull")
-                        if skull then
-                            local sdist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - skull.Position).Magnitude
-                            if sdist > 20 then
-                                toTarget(skull)
-                                wait(0.5)
-                            else
-                                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, skull, 0)
-                                wait(0.1)
-                                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, skull, 1)
-                                CommF("VolcanoEvent")
-                            end
-                        end
-                        for i,v in pairs(workspace.Enemies:GetChildren()) do
-                            if v.Name == "LavaGolem" and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0,0,8)
-                                wait(0.1)
-                                NormalAttack()
-                            end
-                        end
-                    end
-                end
-            end
-        end
+        end)
     end
 end)
 
@@ -1440,96 +1481,102 @@ Options.AutoNevaSoulGuitar:OnChanged(function() _G.AutoSoulGuitar = Options.Auto
 -- Auto Volcano Event Loop (with Lava Golem kill + Dragon Egg collection)
 spawn(function()
     while wait(3) do
-        if _G.AutoVolcanoEvent and Third_Sea then
-            local island = game:GetService("Workspace"):FindFirstChild("PrehistoricIsland")
-            if island then
-                local part
-                for i,v in pairs(island:GetDescendants()) do
-                    if v.ClassName == "Part" or v.ClassName == "MeshPart" then
-                        part = v
-                        break
-                    end
-                end
-                if part then
-                    local dist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - part.Position).Magnitude
-                    if dist > 200 then
-                        toTarget(part)
-                    else
-                        local relic = island:FindFirstChild("FossilAncientRelic") or island:FindFirstChild("Relic")
-                        if relic then
-                            local rdist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - relic.Position).Magnitude
-                            if rdist > 15 then
-                                toTarget(relic)
-                            else
-                                CommF("VolcanoEvent")
-                                wait(0.5)
-                            end
+        pcall(function()
+            if _G.AutoVolcanoEvent and Third_Sea then
+                local hrp = SafeHRP() if not hrp then return end
+                local island = game:GetService("Workspace"):FindFirstChild("PrehistoricIsland")
+                if island then
+                    local part
+                    for i,v in pairs(island:GetDescendants()) do
+                        if v.ClassName == "Part" or v.ClassName == "MeshPart" then
+                            part = v
+                            break
                         end
-                        if _G.AutoKillLavaGolem then
-                            for i,v in pairs(workspace.Enemies:GetChildren()) do
-                                if string.find(v.Name, "Lava") or string.find(v.Name, "Golem") then
-                                    if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0,0,8)
-                                        wait(0.1)
-                                        NormalAttack()
+                    end
+                    if part then
+                        local dist = (hrp.Position - part.Position).Magnitude
+                        if dist > 200 then
+                            toTarget(part)
+                        else
+                            local relic = island:FindFirstChild("FossilAncientRelic") or island:FindFirstChild("Relic")
+                            if relic then
+                                local rdist = (hrp.Position - relic.Position).Magnitude
+                                if rdist > 15 then
+                                    toTarget(relic)
+                                else
+                                    CommF("VolcanoEvent")
+                                    wait(0.5)
+                                end
+                            end
+                            if _G.AutoKillLavaGolem then
+                                for i,v in pairs(workspace.Enemies:GetChildren()) do
+                                    if string.find(v.Name, "Lava") or string.find(v.Name, "Golem") then
+                                        if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                                            hrp.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0,0,8)
+                                            wait(0.1)
+                                            NormalAttack()
+                                        end
                                     end
                                 end
                             end
-                        end
-                        if _G.AutoCollectDragonEgg then
-                            local egg = island:FindFirstChild("DragonEgg") or island:FindFirstChild("Egg")
-                            if egg then
-                                local edist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - egg.Position).Magnitude
-                                if edist > 15 then
-                                    toTarget(egg)
-                                else
-                                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, egg, 0)
-                                    wait(0.1)
-                                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, egg, 1)
-                                    wait(0.5)
-                                    CommF("DragonTether")
+                            if _G.AutoCollectDragonEgg then
+                                local egg = island:FindFirstChild("DragonEgg") or island:FindFirstChild("Egg")
+                                if egg then
+                                    local edist = (hrp.Position - egg.Position).Magnitude
+                                    if edist > 15 then
+                                        toTarget(egg)
+                                    else
+                                        firetouchinterest(hrp, egg, 0)
+                                        wait(0.1)
+                                        firetouchinterest(hrp, egg, 1)
+                                        wait(0.5)
+                                        CommF("DragonTether")
+                                    end
                                 end
                             end
                         end
                     end
                 end
             end
-        end
+        end)
     end
 end)
 
 -- Auto Trial of Flames Loop (Draco V4)
 spawn(function()
     while wait(3) do
-        if _G.AutoTrialOfFlames and Third_Sea then
-            local island = game:GetService("Workspace"):FindFirstChild("PrehistoricIsland")
-            if island then
-                local cave = island:FindFirstChild("TrialCave") or island:FindFirstChild("FlameCave") or island:FindFirstChild("Cave")
-                if cave then
-                    local cdist = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - cave:GetPivot().p).Magnitude
-                    if cdist > 30 then
-                        toTarget(cave:GetPivot().p + Vector3.new(0,10,0))
-                    else
-                        CommF("TrialOfFlames")
-                        wait(1)
-                        for i = 1, 3 do
-                            local relic = workspace:FindFirstChild("TrialRelic" .. i) or workspace:FindFirstChild("Relic" .. i)
-                            if relic then
-                                toTarget(relic)
-                                wait(0.5)
-                                CommF("PlaceRelic", i)
-                                wait(1)
+        pcall(function()
+            if _G.AutoTrialOfFlames and Third_Sea then
+                local hrp = SafeHRP() if not hrp then return end
+                local island = game:GetService("Workspace"):FindFirstChild("PrehistoricIsland")
+                if island then
+                    local cave = island:FindFirstChild("TrialCave") or island:FindFirstChild("FlameCave") or island:FindFirstChild("Cave")
+                    if cave then
+                        local cdist = (hrp.Position - cave:GetPivot().p).Magnitude
+                        if cdist > 30 then
+                            toTarget(cave:GetPivot().p + Vector3.new(0,10,0))
+                        else
+                            CommF("TrialOfFlames")
+                            wait(1)
+                            for i = 1, 3 do
+                                local relic = workspace:FindFirstChild("TrialRelic" .. i) or workspace:FindFirstChild("Relic" .. i)
+                                if relic then
+                                    toTarget(relic)
+                                    wait(0.5)
+                                    CommF("PlaceRelic", i)
+                                    wait(1)
+                                end
                             end
-                        end
-                        local gate = workspace:FindFirstChild("MagicalGate") or workspace:FindFirstChild("CircularGate")
-                        if gate then
-                            toTarget(gate)
-                            wait(0.5)
+                            local gate = workspace:FindFirstChild("MagicalGate") or workspace:FindFirstChild("CircularGate")
+                            if gate then
+                                toTarget(gate)
+                                wait(0.5)
+                            end
                         end
                     end
                 end
             end
-        end
+        end)
     end
 end)
 
