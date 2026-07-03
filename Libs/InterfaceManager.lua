@@ -3,7 +3,7 @@ local httpService = game:GetService("HttpService")
 local InterfaceManager = {} do
 	InterfaceManager.Folder = "FluentSettings"
     InterfaceManager.Settings = {
-        Theme = "Dark",
+        Theme = "Rose",
         Acrylic = true,
         Transparency = true,
         MenuKeybind = "LeftControl"
@@ -112,3 +112,4 @@ local InterfaceManager = {} do
 end
 
 return InterfaceManager
+
