@@ -19,9 +19,9 @@ local function onClick()
 end
 button.MouseButton1Click:Connect(onClick)
 
-local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/DamThien332/UI-Libs/main/Main%20Fluent.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/DamThien332/UI-Libs/main/Save%20Manager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/DamThien332/UI-Libs/main/Interface%20Manager.lua"))()
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Window = Fluent:CreateWindow({
     Title = "Byte Hub",
